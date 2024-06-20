@@ -9,11 +9,13 @@ abstract class TaskEvent extends Equatable {
 
 class LoadTasks extends TaskEvent {
   final int userId;
+  final int limit;
+  final int skip;
 
-  const LoadTasks(this.userId);
+  const LoadTasks(this.userId, {this.limit = 10, this.skip = 0});
 
   @override
-  List<Object> get props => [userId];
+  List<Object> get props => [userId, limit, skip];
 }
 
 class AddTask extends TaskEvent {

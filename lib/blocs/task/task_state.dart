@@ -13,11 +13,19 @@ class TaskLoading extends TaskState {}
 
 class TaskLoaded extends TaskState {
   final List<dynamic> tasks;
+  final int total;
+  final int skip;
+  final int limit;
 
-  const TaskLoaded({required this.tasks});
+  const TaskLoaded({
+    required this.tasks,
+    required this.total,
+    required this.skip,
+    required this.limit,
+  });
 
   @override
-  List<Object> get props => [tasks];
+  List<Object> get props => [tasks, total, skip, limit];
 }
 
 class TaskError extends TaskState {

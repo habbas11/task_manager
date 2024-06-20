@@ -36,74 +36,81 @@ class TaskView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Tasks'),
       ),
-      body: BlocListener<TaskBloc, TaskState>(
-        listener: (context, state) {
-          if (state is TaskLoaded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tasks list has been updated!')),
+      body: BlocBuilder<TaskBloc, TaskState>(
+        builder: (context, state) {
+          if (state is TaskLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is TaskLoaded) {
+            return ListView.builder(
+              itemCount: state.tasks.length + 1,
+              // Add 1 for the "More..." button
+              itemBuilder: (context, index) {
+                if (index == state.tasks.length) {
+                  // Display "More..." button
+                  if (state.tasks.length < state.total) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        context.read<TaskBloc>().add(
+                              LoadTasks(
+                                userId,
+                                limit: state.limit,
+                                skip: state.skip + state.limit,
+                              ),
+                            );
+                      },
+                      child: const Text('More...'),
+                    );
+                  } else {
+                    return const SizedBox.shrink(); // No more tasks to load
+                  }
+                }
+
+                // Display task
+                final task = state.tasks[index];
+                return ListTile(
+                  title: Text(task['todo']),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Checkbox(
+                        value: task['completed'] == 1,
+                        onChanged: (bool? value) {
+                          context.read<TaskBloc>().add(UpdateTask(
+                                id: task['id'],
+                                completed: value ?? false,
+                                todo: task['todo'],
+                                userId: task['userId'],
+                              ));
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () {
+                          _showEditTaskDialog(
+                            context,
+                            task['id'],
+                            task['todo'],
+                            task['userId'],
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          context.read<TaskBloc>().add(DeleteTask(task['id']));
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
             );
           } else if (state is TaskError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            return Center(child: Text(state.message));
+          } else {
+            return Container();
           }
         },
-        child: BlocBuilder<TaskBloc, TaskState>(
-          builder: (context, state) {
-            if (state is TaskLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is TaskLoaded) {
-              return ListView.builder(
-                itemCount: state.tasks.length,
-                itemBuilder: (context, index) {
-                  final task = state.tasks[index];
-                  return ListTile(
-                    title: Text(task['todo']),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Checkbox(
-                          value: task['completed'] == 1,
-                          onChanged: (bool? value) {
-                            context.read<TaskBloc>().add(
-                                  UpdateTask(
-                                    id: task['id'],
-                                    completed: value ?? false,
-                                    todo: task['todo'],
-                                    userId: task['userId'],
-                                  ),
-                                );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            _showEditTaskDialog(
-                              context,
-                              task['id'],
-                              task['todo'],
-                              task['userId'],
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            context
-                                .read<TaskBloc>()
-                                .add(DeleteTask(task['id']));
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            } else {
-              return Container();
-            }
-          },
-        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

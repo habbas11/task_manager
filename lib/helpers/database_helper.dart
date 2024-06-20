@@ -1,8 +1,10 @@
+// database_helper.dart
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
+
   factory DatabaseHelper() => _instance;
   static Database? _database;
 
@@ -15,49 +17,56 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    print("===> _initDatabase RUN");
-    String path = join(await getDatabasesPath(), 'task_manager.db');
-    print(path);
+    String path = join(await getDatabasesPath(), 'tasks.db');
     return await openDatabase(
       path,
       version: 1,
-      onCreate: _onCreate,
+      onCreate: (db, version) {
+        return db.execute(
+          'CREATE TABLE tasks(id INTEGER PRIMARY KEY, todo TEXT, completed INTEGER, userId INTEGER)',
+        );
+      },
     );
   }
 
-  Future _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE tasks (
-        id INTEGER PRIMARY KEY,
-        todo TEXT,
-        completed INTEGER,
-        userId INTEGER
-      )
-    ''');
-  }
-
-  Future<List<Map<String, dynamic>>> getTasks() async {
-    Database db = await database;
-    return await db.query('tasks');
-  }
-
   Future<int> insertTask(Map<String, dynamic> task) async {
-    Database db = await database;
+    final db = await database;
     return await db.insert('tasks', task);
   }
 
   Future<int> updateTask(Map<String, dynamic> task) async {
-    Database db = await database;
-    return await db.update('tasks', task, where: 'id = ?', whereArgs: [task['id']]);
+    final db = await database;
+    return await db.update(
+      'tasks',
+      task,
+      where: 'id = ?',
+      whereArgs: [task['id']],
+    );
   }
 
   Future<int> deleteTask(int id) async {
-    Database db = await database;
-    return await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+    final db = await database;
+    return await db.delete(
+      'tasks',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
-  Future<void> deleteAllTasks() async {
-    Database db = await database;
-    await db.delete('tasks');
+  Future<List<Map<String, dynamic>>> getTasks(
+      {int limit = 10, int skip = 0}) async {
+    final db = await database;
+    return await db.query(
+      'tasks',
+      limit: limit,
+      offset: skip,
+    );
+  }
+
+  Future<int> getTaskCount() async {
+    final db = await database;
+    final result = await db.rawQuery('SELECT COUNT(*) FROM tasks');
+    print("getTaskCount() returned ${Sqflite.firstIntValue(result)}");
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 }
