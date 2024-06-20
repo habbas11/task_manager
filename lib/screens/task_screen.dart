@@ -14,7 +14,7 @@ class TaskScreen extends StatelessWidget {
 
     // Only load tasks if the state is not already loaded
     final taskBloc = BlocProvider.of<TaskBloc>(context);
-    if (!(taskBloc.state is TaskLoaded)) {
+    if (taskBloc.state is! TaskLoaded) {
       taskBloc.add(LoadTasks(userId));
     }
 
@@ -34,61 +34,76 @@ class TaskView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Tasks'),
+        title: const Text('Tasks'),
       ),
-      body: BlocBuilder<TaskBloc, TaskState>(
-        builder: (context, state) {
-          if (state is TaskLoading) {
-            return Center(child: CircularProgressIndicator());
-          } else if (state is TaskLoaded) {
-            return ListView.builder(
-              itemCount: state.tasks.length,
-              itemBuilder: (context, index) {
-                final task = state.tasks[index];
-                return ListTile(
-                  title: Text(task['todo']),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Checkbox(
-                        value: task['completed'] == 1,
-                        onChanged: (bool? value) {
-                          context.read<TaskBloc>().add(UpdateTask(
-                                id: task['id'],
-                                completed: value ?? false,
-                                todo: task['todo'],
-                                userId: task['userId'],
-                              ));
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () {
-                          _showEditTaskDialog(
-                            context,
-                            task['id'],
-                            task['todo'],
-                            task['userId'],
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          context.read<TaskBloc>().add(DeleteTask(task['id']));
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
+      body: BlocListener<TaskBloc, TaskState>(
+        listener: (context, state) {
+          if (state is TaskLoaded) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Tasks list has been updated!')),
             );
           } else if (state is TaskError) {
-            return Center(child: Text(state.message));
-          } else {
-            return Container();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
           }
         },
+        child: BlocBuilder<TaskBloc, TaskState>(
+          builder: (context, state) {
+            if (state is TaskLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is TaskLoaded) {
+              return ListView.builder(
+                itemCount: state.tasks.length,
+                itemBuilder: (context, index) {
+                  final task = state.tasks[index];
+                  return ListTile(
+                    title: Text(task['todo']),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          value: task['completed'] == 1,
+                          onChanged: (bool? value) {
+                            context.read<TaskBloc>().add(
+                                  UpdateTask(
+                                    id: task['id'],
+                                    completed: value ?? false,
+                                    todo: task['todo'],
+                                    userId: task['userId'],
+                                  ),
+                                );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            _showEditTaskDialog(
+                              context,
+                              task['id'],
+                              task['todo'],
+                              task['userId'],
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            context
+                                .read<TaskBloc>()
+                                .add(DeleteTask(task['id']));
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            } else {
+              return Container();
+            }
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -102,7 +117,7 @@ class TaskView extends StatelessWidget {
             },
           );
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -115,7 +130,10 @@ class TaskView extends StatelessWidget {
         return BlocProvider.value(
           value: BlocProvider.of<TaskBloc>(context),
           child: EditTaskDialog(
-              taskId: taskId, taskText: taskText, userId: userId),
+            taskId: taskId,
+            taskText: taskText,
+            userId: userId,
+          ),
         );
       },
     );
