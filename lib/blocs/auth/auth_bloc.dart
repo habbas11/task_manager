@@ -27,7 +27,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
-        emit(AuthAuthenticated(token));
+        final userId = data['id'];
+        emit(AuthAuthenticated(token, userId));
       } else {
         emit(AuthError('Login failed. Please check your credentials.'));
       }

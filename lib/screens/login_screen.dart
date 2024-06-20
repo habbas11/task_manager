@@ -5,6 +5,8 @@ import '../blocs/auth/auth_event.dart';
 import '../blocs/auth/auth_state.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -15,13 +17,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _usernameController.text = "emilys";
+    _passwordController.text = "emilyspass";
+
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // Navigate to home screen
-            Navigator.of(context).pushReplacementNamed('/home');
+            // Navigate to task screen
+            Navigator.of(context)
+                .pushReplacementNamed('/tasks', arguments: state.userId);
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
@@ -46,7 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () {
                   final username = _usernameController.text;
                   final password = _passwordController.text;
-                  context.read<AuthBloc>().add(AuthLoginRequested(username, password));
+                  context
+                      .read<AuthBloc>()
+                      .add(AuthLoginRequested(username, password));
                 },
                 child: const Text('Login'),
               ),
