@@ -42,6 +42,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
             context.read<TaskBloc>().add(UpdateTask(
               id: widget.taskId,
               todo: _taskController.text,
+              userId: widget.userId,
             ));
             Navigator.of(context).pop();
           },

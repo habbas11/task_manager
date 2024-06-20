@@ -38,7 +38,6 @@ class TaskView extends StatelessWidget {
       ),
       body: BlocBuilder<TaskBloc, TaskState>(
         builder: (context, state) {
-          print("Current state: $state");
           if (state is TaskLoading) {
             return Center(child: CircularProgressIndicator());
           } else if (state is TaskLoaded) {
@@ -52,17 +51,25 @@ class TaskView extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Checkbox(
-                        value: task['completed'],
+                        value: task['completed'] == 1,
                         onChanged: (bool? value) {
                           context.read<TaskBloc>().add(UpdateTask(
-                              id: task['id'], completed: value ?? false));
+                                id: task['id'],
+                                completed: value ?? false,
+                                todo: task['todo'],
+                                userId: task['userId'],
+                              ));
                         },
                       ),
                       IconButton(
                         icon: Icon(Icons.edit),
                         onPressed: () {
                           _showEditTaskDialog(
-                              context, task['id'], task['todo'], userId);
+                            context,
+                            task['id'],
+                            task['todo'],
+                            task['userId'],
+                          );
                         },
                       ),
                       IconButton(

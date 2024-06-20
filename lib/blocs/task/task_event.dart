@@ -33,17 +33,19 @@ class AddTask extends TaskEvent {
 
 class UpdateTask extends TaskEvent {
   final int id;
+  final int userId;
   final String? todo;
   final bool? completed;
 
   const UpdateTask({
     required this.id,
+    required this.userId,
     this.todo,
     this.completed,
   });
 
   @override
-  List<Object> get props => [id, todo ?? '', completed ?? false];
+  List<Object> get props => [id, userId, todo ?? '', completed ?? false];
 }
 
 class DeleteTask extends TaskEvent {
